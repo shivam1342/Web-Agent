@@ -16,14 +16,16 @@ I built a **semi-autonomous agent** using a perception → decision → evaluati
 4. **Evaluates** the outcome to detect changes, errors, or unexpected behavior
 5. **Stops** when the exploration reaches a natural endpoint
 
-**Target Website:** https://practicetestautomation.com/practice-test-login/  
-**Focus:** Login flow testing (validation and authentication)
+**Target Website:** https://docs.python.org  
+**Focus:** Documentation exploration and navigation testing
 
 ## Architecture
 
 ### State Machine
 ```
-IDLE → OBSERVE → DECIDE → ACT → EVALUATE → STOP
+IDLE → OBSERVE → DECIDE → ACT → EVALUATE → STOP                                   
+          |-----------------------|      
+
 ```
 
 The agent progresses through these states with minimal backtracking (max 3-5 actions total). This is intentionally **not** an infinite autonomous loop.
@@ -151,8 +153,8 @@ python main.py
 ```
 
 The agent will:
-1. Open https://automationexercise.com/
-2. Explore the signup/login flow
+1. Open https://docs.python.org
+2. Explore the documentation structure
 3. Generate a run log in `logs/run_log.json`
 4. Output insights to console
 
