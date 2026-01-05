@@ -29,7 +29,7 @@ ENV/
 # # Logs
 # logs/
 # *.log
-
+STUDY.md
 # Playwright
 playwright/.cache/
 .pytest_cache/
