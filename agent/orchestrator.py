@@ -30,7 +30,9 @@ class Orchestrator:
             self.context.transition_to(AgentState.OBSERVE)
             
             # Main loop: OBSERVE → DECIDE → ACT → EVALUATE → (back to OBSERVE)
-            while self.context.current_state != AgentState.STOP:
+            # Note: Agent does not assume actions succeed. Evaluation feeds back into observation
+            # to confirm environmental change before continuing.
+            while self.context.current_state != AgentState.TERMINATE:
                 
                 if self.context.current_state == AgentState.OBSERVE:
                     self._observe()
@@ -70,8 +72,8 @@ class Orchestrator:
         )
         
         if action is None:
-            print("[DECIDE] No valid actions. Stopping.")
-            self.context.transition_to(AgentState.STOP)
+            print("[DECIDE] No valid actions. Terminating.")
+            self.context.transition_to(AgentState.TERMINATE)
         else:
             self.context.chosen_action = action
             self.context.transition_to(AgentState.ACT)
@@ -138,10 +140,10 @@ class Orchestrator:
         # Store result for stop check
         self.context.action_result = evaluation
         
-        # Check if should stop
-        if self.context.should_stop():
-            print(f"[EVALUATE] Reached {self.context.action_count} actions. Stopping.")
-            self.context.transition_to(AgentState.STOP)
+        # Check if should terminate
+        if self.context.should_terminate():
+            print(f"[EVALUATE] Reached {self.context.action_count} actions. Terminating.")
+            self.context.transition_to(AgentState.TERMINATE)
         else:
             # Continue: Loop back to OBSERVE
             self.context.transition_to(AgentState.OBSERVE)

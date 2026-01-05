@@ -1,12 +1,13 @@
 """
 State machine for the web agent.
-States: IDLE → OBSERVE → DECIDE → ACT → EVALUATE → STOP
-"""
-
+States: IDLE → OBSERVE → DECIDE → ACT → EVALUATE → TERMINATE
 from enum import Enum
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
-
+"""
+from enum import Enum
+from dataclasses import dataclass
+from typing import Optional, Dict, Any
 
 class AgentState(Enum):
     """Agent states following a simple FSM"""
@@ -15,7 +16,7 @@ class AgentState(Enum):
     DECIDE = "decide"
     ACT = "act"
     EVALUATE = "evaluate"
-    STOP = "stop"
+    TERMINATE = "terminate"
 
 
 @dataclass
@@ -42,9 +43,9 @@ class StateContext:
         self.action_history.append(action)
         self.action_count += 1
     
-    def should_stop(self) -> bool:
-        """Determine if agent should stop"""
-        # Simple: Stop after 6 actions
+    def should_terminate(self) -> bool:
+        """Determine if agent should terminate (max 6 actions for focused exploration)"""
+        # Terminate after 6 actions to ensure bounded exploration
         if self.action_count >= 6:
             return True
         

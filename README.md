@@ -19,14 +19,21 @@ I built a **semi-autonomous agent** using a perception → decision → evaluati
 **Target Website:** https://docs.python.org  
 **Focus:** Documentation exploration and navigation testing
 
+**Why Python Docs?**
+- Stable, well-structured site (avoids flaky JavaScript)
+- Information-dense (tests meaningful navigation decisions)
+- Version variants (tests agent's ability to detect redundant exploration)
+- No authentication flow (focuses on pure exploration intelligence)
+
 ## Architecture
 
 ### State Machine
 ```
-IDLE → OBSERVE → DECIDE → ACT → EVALUATE → STOP                                   
-          |-----------------------|      
-
+IDLE → OBSERVE → DECIDE → ACT → EVALUATE → TERMINATE
+          ↑________________________|      
 ```
+
+**Key Design Note:** The agent does not assume actions succeed. Evaluation feeds back into observation to confirm environmental change before continuing. This is systems thinking - the agent verifies state transitions rather than blindly advancing.
 
 The agent progresses through these states with minimal backtracking (max 3-5 actions total). This is intentionally **not** an infinite autonomous loop.
 
@@ -75,41 +82,48 @@ The system applies hard rules:
 - ❌ Don't repeat the same action twice
 - ❌ Don't click if no clickable elements exist
 - ❌ Stop if no meaningful action remains
-- ✅ Prioritize actions that advance the flow (e.g., form submission over navigation)
+- ✅ Prioritize actions using intelligent heuristics
 
-### Step 3: Select ONE Action
-The system picks the best action and logs the reasoning:
+### Step 3: Select ONE Action with Heuristics
+The system picks the best action using decision heuristics:
+
+**Heuristics Applied:**
+1. Prefer version-changing links (increases information diversity)
+2. Prefer documentation navigation over repetitive sibling navigation
+3. Prefer links that increase information density (index, modules, tutorials)
+
+Example reasoning output:
 ```json
 {
-  "action": "click_button",
-  "target": "Signup / Login",
-  "reason": "Primary CTA to access signup flow"
+  "action": "click_link",
+  "target": "Python 3.15 (in development)",
+  "reason": "Version link selected to compare documentation variants across Python versions"
 }
 ```
 
 **Critical Design Choice:**  
-> **The LLM only proposes actions. The system decides.**
+> **The intelligence lies in how the system constrains and evaluates LLM suggestions, not in the model itself.**
 
 This hybrid approach balances flexibility (LLM creativity) with reliability (deterministic control).
 
 ## Insights Produced
 
-The agent generates insights by comparing expected vs. actual behavior:
+The agent generates insights by analyzing page type transitions and navigation patterns:
 
 ### Example Insights:
-1. **No-feedback submission**: "Submit button clicked on empty form, but no error message appeared"
-2. **Silent redirects**: "Login succeeded but no confirmation message shown"
-3. **Unexpected validation**: "Email field accepts invalid format"
-4. **Navigation loops**: "Signup link leads back to same page"
+1. **Redundant navigation**: "Navigation changed version but not content type - exploring version variants"
+2. **Meaningful exploration**: "Navigation changed page type from version_docs to module_index - meaningful exploration"
+3. **Failed actions**: "No observable change detected - action may have failed or target was incorrect"
+4. **Dynamic content**: "Page updated after 'click_button' - dynamic content loaded"
 
 ### Output Format:
 ```json
 {
-  "action": "click_button",
-  "target": "Submit",
-  "result": "no_feedback",
-  "observation": "Form submitted with empty fields but page shows no error",
-  "insight": "Missing client-side validation"
+  "action": "click_link",
+  "target": "modules",
+  "result": "url_changed",
+  "observation": "Page navigated from .../download.html to .../py-modindex.html",
+  "insight": "Navigation changed page type from download_page to module_index - meaningful exploration"
 }
 ```
 

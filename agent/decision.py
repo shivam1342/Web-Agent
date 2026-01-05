@@ -100,7 +100,12 @@ def filter_actions(proposals: List[str], action_history: List[Dict], page_data: 
 
 def choose_action(filtered_proposals: List[str], page_data: Dict) -> Optional[Dict[str, Any]]:
     """
-    Choose ONE action from filtered proposals.
+    Choose ONE action from filtered proposals using intelligent heuristics.
+    
+    Heuristics:
+    1. Prefer version-changing links (increases information diversity)
+    2. Prefer documentation navigation over repetitive sibling navigation
+    3. Prefer links that increase information density
     
     Returns:
         {
@@ -112,52 +117,49 @@ def choose_action(filtered_proposals: List[str], page_data: Dict) -> Optional[Di
     if not filtered_proposals:
         return None
     
-    # First priority: Navigate to signup/login if not there yet
     current_url = page_data.get("url", "")
-    if "/login" not in current_url and "/signup" not in current_url:
-        for proposal in filtered_proposals:
-            if proposal.startswith("click_link:Signup"):
+    
+    # Heuristic 1: Prefer version-changing links (Python 3.x navigation)
+    for proposal in filtered_proposals:
+        if proposal.startswith("click_link:Python 3."):
+            target = proposal.split(":", 1)[1]
+            return {
+                "action": "click_link",
+                "target": target,
+                "reason": "Version link selected to compare documentation variants across Python versions"
+            }
+    
+    # Heuristic 2: Prefer navigation to index/module pages (information-dense)
+    information_dense_keywords = ["download", "modules", "index", "tutorial", "library"]
+    for proposal in filtered_proposals:
+        if proposal.startswith("click_link:"):
+            target = proposal.split(":", 1)[1].lower()
+            if any(keyword in target for keyword in information_dense_keywords):
                 return {
                     "action": "click_link",
-                    "target": "Signup / Login",
-                    "reason": "Navigate to signup/login page first"
+                    "target": proposal.split(":", 1)[1],
+                    "reason": f"Navigation to '{proposal.split(':', 1)[1]}' increases information density"
                 }
     
-    # Second priority: Initial signup form (on /login page)
+    # Heuristic 3: Prefer navigation links over buttons (documentation exploration)
     for proposal in filtered_proposals:
-        if proposal.startswith("fill_signup_form:"):
+        if proposal.startswith("click_link:"):
+            target = proposal.split(":", 1)[1]
             return {
-                "action": "fill_signup_form",
-                "target": "new_account",
-                "reason": "Create initial account with name and email"
+                "action": "click_link",
+                "target": target,
+                "reason": f"Link '{target}' selected for documentation exploration"
             }
     
-    # Third: Detailed registration form (on /signup page after initial signup)
+    # Fallback: Any button action
     for proposal in filtered_proposals:
-        if proposal.startswith("fill_registration_form:"):
+        if proposal.startswith("click_button:"):
+            target = proposal.split(":", 1)[1]
             return {
-                "action": "fill_registration_form",
-                "target": "complete_profile",
-                "reason": "LLM-assisted intelligent form filling for detailed registration"
+                "action": "click_button",
+                "target": target,
+                "reason": f"Button '{target}' selected as available action"
             }
-        
-        if proposal.startswith("fill_login_form:"):
-            return {
-                "action": "fill_login_form",
-                "target": "existing_account",
-                "reason": "Testing login flow with stored credentials"
-            }
-        
-        if proposal.startswith("try_empty_login:"):
-            return {
-                "action": "try_empty_login",
-                "target": "validation_test",
-                "reason": "Testing form validation with empty submission"
-            }
-    
-    # Next: Navigate to login after signup
-    for proposal in filtered_proposals:
-        if proposal.startswith("navigate_to_login:"):
             return {
                 "action": "navigate_to_login",
                 "target": "test_login",
